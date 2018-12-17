@@ -1,0 +1,24 @@
+{
+  "name": "cocos_list_ctrl",
+  "version": "1.0.0",
+  "description": "this is a list component can be used in CocosCreator project.",
+  "main": "cocos_list_ctrl.js",
+  "scripts": {
+    "test": "test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/huomiaocode/cocos_list_ctrl.git"
+  },
+  "keywords": [
+    "CocosCreator",
+    "list",
+    "list_ctrl"
+  ],
+  "author": "(huomiao<miaofengliang2005@163.com>)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/huomiaocode/cocos_list_ctrl/issues"
+  },
+  "homepage": "https://github.com/huomiaocode/cocos_list_ctrl#readme"
+}
