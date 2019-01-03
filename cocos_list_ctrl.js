@@ -26,26 +26,15 @@ cc.Class({
 
         enableItemClick: false,
         itemDelayCreate: false,
-
-        canRegisterEvent: false,
         
         itemClickEvents: {
             default: [],
             type: cc.Component.EventHandler,
         },
-
-        topY: 0,
     },
 
     onLoad: function () {
         this._isLoaded = true;
-        if(this.canRegisterEvent){
-            this.scrollView.node.on("scrolling",this._onScrolling,this);
-            this.scrollView.node.on("scroll-ended",this._onScrollEnded,this);
-            this.scrollView.node.on(cc.Node.EventType.TOUCH_START, this._onTouchBegan, this);
-            this.scrollView.node.on(cc.Node.EventType.TOUCH_MOVE, this._onTouchMoved, this);
-            this.scrollView.node.on(cc.Node.EventType.TOUCH_END, this._onTouchEnded, this);
-        }
 
         this._lastContentPosX = 0;
         this._lastContentPosY = 0;
@@ -56,78 +45,13 @@ cc.Class({
 
         this.updateView();
     },
-    _onTouchBegan: function(){
-    },
-    _onTouchMoved: function(){
-    },
 
-    _onTouchEnded: function(){
-        this.scrollView.stopAutoScroll();
-        this._onScrollEnded();
-    },
     onDestroy: function () {
         this._itemObjs.length = 0;
         this._itemAllCreated = false;
         this._itemPools.clear();
-
-        if(this.canRegisterEvent){
-            this.scrollView.node.off("scrolling",this._onScrolling,this);
-            this.scrollView.node.off("scroll-ended",this._onScrollEnded,this);
-            this.scrollView.node.off(cc.Node.EventType.TOUCH_START, this._onTouchBegan, this);
-            this.scrollView.node.off(cc.Node.EventType.TOUCH_MOVE, this._onTouchMoved, this);
-            this.scrollView.node.off(cc.Node.EventType.TOUCH_END, this._onTouchEnded, this);
-        }
-
     },
-    _onScrollEnded: function(){
-        this.scrollView.stopAutoScroll();
-        let contentNode   = this.scrollView.content;
-        let parentHeight  =  contentNode.parent.height;
-        let offset = this.scrollView.getScrollOffset();
-        let indexY       = this.getIndexYInView();
-        if(indexY != -1){
-            let viewNode     = contentNode.children[indexY];
-            let convertPos   = contentNode.convertToNodeSpace(cc.v2(0,-viewNode.y));
-            let pos1 = -(viewNode.y) - offset.y;
-            let stableY        = parentHeight / 2;
-            if(pos1 > stableY){
-                let finalPosY = offset.y + (pos1 - stableY);
-               this.scrollView.scrollToOffset(cc.v2(0,finalPosY),0);
-            }else if(pos1 < stableY){
-                let finalPosY = offset.y - (stableY - pos1);
-               this.scrollView.scrollToOffset(cc.v2(0,finalPosY),0);
-            }
-            let com = viewNode.getComponent(this.itemComponentName);
-            if(com && com.updateItemEffect){
-                com.updateItemEffect(1.2);
-            }
-        }
-    },
-    _onScrolling: function(){
-        let contentNode   = this.scrollView.content;
-        let parentHeight  =  contentNode.parent.height;
-        let offset = this.scrollView.getScrollOffset();
-        let indexY       = this.getIndexYInView();
-        if(indexY != -1){
-            let viewNode     = contentNode.children[indexY];
-            let pos1         = -(viewNode.y) - offset.y;
-            let stableY      = parentHeight / 2;
-            let children     = this.scrollView.content.children;
-            let maxGapY      = viewNode.height/2;
-            children.forEach(function(node,idx){
-                let com = node.getComponent(this.itemComponentName);
-                if(com && com.updateItemEffect){
-                    if(indexY == idx){
-                        let dis = Math.abs(pos1 - stableY);
-                        let scale = (maxGapY - dis ) / maxGapY * 0.2 + 1;
-                        com.updateItemEffect(scale);
-                    }else{
-                        com.updateItemEffect(0.75);
-                    }
-                }
-            }.bind(this));
-        }
-    },
+    
     /**
      * 清除所有的itemRenderer
      */
@@ -139,21 +63,13 @@ cc.Class({
      * 设置数据
      */
     setDataProvider: function (datas, keepPos) {
-        let lastPos = this.scrollView.content.getPosition();
+        let sOffset = this.scrollView.getScrollOffset();
         
         this._datas = datas;
         this.updateView();
         
         if (keepPos) {
-            let maxScrollOffset = this.scrollView.getMaxScrollOffset();
-            if (this.isHorizontal) {
-                if (lastPos.x > maxScrollOffset.x) lastPos.x = maxScrollOffset.x;
-                this.scrollView.content.x = lastPos.x;
-            }
-            else {
-                if (lastPos.y > maxScrollOffset.y) lastPos.y = maxScrollOffset.y;
-                this.scrollView.content.y = lastPos.y;
-            }
+            this.scrollView.scrollToOffset(sOffset);
         }
     },
 
@@ -245,9 +161,7 @@ cc.Class({
 
         let shownCount = 0;
         let maxRowColSize = 0;
-        if(!this.isHorizontal && this.topY != 0){
-            this.topY = (this.scrollView.content.parent.height - this._itemInfo.height) / 2;
-        }
+
         if (this.isHorizontal) {
             if (this.autoRowCount) {
                 this.rowCount = Math.floor(this.scrollView.content.parent.height / this._itemInfo.height);
@@ -267,7 +181,7 @@ cc.Class({
             shownCount = this.columnCount * (Math.ceil(this.scrollView.content.parent.height / this._itemInfo.height) + 1);
 
             maxRowColSize = this.columnCount * (this._itemInfo.width + this.gapH) - this.gapH;
-            this.scrollView.content.height = Math.ceil(dataLen / this.columnCount) * (this._itemInfo.height + this.gapV) + this.gapV + 2 * this.topY;
+            this.scrollView.content.height = Math.ceil(dataLen / this.columnCount) * (this._itemInfo.height + this.gapV) + this.gapV + 2;
         }
 
         // add item
@@ -287,7 +201,7 @@ cc.Class({
                 let _toX = _col * (this._itemInfo.width + this.gapH) + (this._itemInfo.anchorX) * this._itemInfo.width - this.scrollView.content.width * this.scrollView.content.anchorX;
                 itemObj.x = _toX + (this.scrollView.content.width - maxRowColSize) / 2;
 
-                itemObj.y = - Math.floor(i / this.columnCount) * (this._itemInfo.height + this.gapV) - this.gapV - (1 - this._itemInfo.anchorY) * this._itemInfo.height - this.topY;
+                itemObj.y = - Math.floor(i / this.columnCount) * (this._itemInfo.height + this.gapV) - this.gapV - (1 - this._itemInfo.anchorY) * this._itemInfo.height;
             }
             itemObj.active = i < dataLen;
 
@@ -378,7 +292,7 @@ cc.Class({
     },
 
     _getItemPositionInScroll: function (itemObj) {
-        let worldPos = this.scrollView.content.convertToWorldSpaceAR(cc.p(itemObj.x, itemObj.y));
+        let worldPos = this.scrollView.content.convertToWorldSpaceAR(new cc.Vec2(itemObj.x, itemObj.y));
         let viewPos = this.scrollView.node.convertToNodeSpaceAR(worldPos);
         return viewPos;
     },
@@ -543,24 +457,7 @@ cc.Class({
             this._lastContentPosY = this.scrollView.content.y;
         }
     },
-    /*
-    获取当前视图范围内的节点索引
-    */
-    getIndexYInView: function(){
-        let contentNode = this.scrollView.content;
-        let parentNode  = contentNode.parent;        
-        let posY        = parentNode.height /2 - parentNode.height * parentNode.anchorY - contentNode.y;
-        let index       = -1;
-        this.scrollView.content.children.some(function(node,idx){
-            let y1 = node.y - node.height * node.anchorY;
-            let y2 = y1  + node.height;
-            if(posY >= y1 && posY <= y2){
-                 index = idx;
-                 return true;
-            }
-        });
-        return index;
-    },
+
     scrollEvent: function (sender, event) {
         switch (event) {
             case 0: 	// "Scroll to Top"
