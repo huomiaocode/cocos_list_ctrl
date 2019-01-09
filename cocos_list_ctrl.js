@@ -26,7 +26,7 @@ cc.Class({
 
         enableItemClick: false,
         itemDelayCreate: false,
-        
+
         itemClickEvents: {
             default: [],
             type: cc.Component.EventHandler,
@@ -40,18 +40,29 @@ cc.Class({
         this._lastContentPosY = 0;
         this._itemInfo = { width: 0, height: 0, anchorX: 0.5, anchorY: 0.5 };
         this._itemObjs = [];
+        this._allItemInfos = [];
         this._itemAllCreated = false;
         this._itemPools = new cc.NodePool(this.itemComponentName);
+
+        this._scrollViewBox = new cc.Rect(
+            -this.scrollView.node.anchorX * this.scrollView.node.width,
+            -this.scrollView.node.anchorY * this.scrollView.node.height,
+            this.scrollView.node.width,
+            this.scrollView.node.height,
+        );
+        this._tempItemPos = new cc.Vec2();
+        this._tempItemBox = new cc.Rect();
 
         this.updateView();
     },
 
     onDestroy: function () {
         this._itemObjs.length = 0;
+        this._allItemInfos.length = 0;
         this._itemAllCreated = false;
         this._itemPools.clear();
     },
-    
+
     /**
      * 清除所有的itemRenderer
      */
@@ -64,11 +75,12 @@ cc.Class({
      */
     setDataProvider: function (datas, keepPos) {
         let sOffset = this.scrollView.getScrollOffset();
-        
+
         this._datas = datas;
         this.updateView();
-        
+
         if (keepPos) {
+            if (this.isHorizontal) sOffset.x = Math.abs(sOffset.x);
             this.scrollView.scrollToOffset(sOffset);
         }
     },
@@ -108,7 +120,7 @@ cc.Class({
         // recyle
         let children = this.scrollView.content.children.slice();
         children.reverse();
-        
+
         let self = this;
         let getOneItemObj = function (needCreate) {
             let node = children.pop();
@@ -129,6 +141,7 @@ cc.Class({
         }
 
         this._itemObjs.length = 0;
+        this._allItemInfos.length = 0;
         this._itemAllCreated = false;
 
         if (this.isHorizontal) {
@@ -163,6 +176,10 @@ cc.Class({
         let maxRowColSize = 0;
 
         if (this.isHorizontal) {
+            this.scrollView.content.anchorX = 0;
+            this.scrollView.content.anchorY = 0.5;
+            this.scrollView.content.y = 0;
+
             if (this.autoRowCount) {
                 this.rowCount = Math.floor(this.scrollView.content.parent.height / this._itemInfo.height);
             }
@@ -173,6 +190,10 @@ cc.Class({
             this.scrollView.content.width = Math.ceil(dataLen / this.rowCount) * (this._itemInfo.width + this.gapH) + this.gapH;
         }
         else {
+            this.scrollView.content.anchorX = 0.5;
+            this.scrollView.content.anchorY = 1;
+            this.scrollView.content.x = 0;
+
             if (this.autoColumnCount) {
                 this.columnCount = Math.floor(this.scrollView.content.parent.width / this._itemInfo.width);
             }
@@ -185,27 +206,35 @@ cc.Class({
         }
 
         // add item
-        for (let i = 0; i < shownCount && i < dataLen; ++i) {
-            let itemObj = i === 0 ? oneItemObj : getOneItemObj(false);
-            itemObj.index = i;
-            this._itemObjs.push(itemObj);
-
+        var x = 0;
+        var y = 0;
+        for (let i = 0; i < dataLen; ++i) {
             if (this.isHorizontal) {
                 let _row = i % this.rowCount;
                 let _toY = _row * (this._itemInfo.height + this.gapV) + (this._itemInfo.anchorY) * this._itemInfo.height - this.scrollView.content.height * this.scrollView.content.anchorY;
-                itemObj.y = -_toY - (this.scrollView.content.height - maxRowColSize) / 2;
-                itemObj.x = Math.floor(i / this.rowCount) * (this._itemInfo.width + this.gapH) + this.gapH + (1 - this._itemInfo.anchorX) * this._itemInfo.width;
+                y = -_toY - (this.scrollView.content.height - maxRowColSize) / 2;
+                x = Math.floor(i / this.rowCount) * (this._itemInfo.width + this.gapH) + this.gapH + (1 - this._itemInfo.anchorX) * this._itemInfo.width;
             }
             else {
                 let _col = i % this.columnCount;
                 let _toX = _col * (this._itemInfo.width + this.gapH) + (this._itemInfo.anchorX) * this._itemInfo.width - this.scrollView.content.width * this.scrollView.content.anchorX;
-                itemObj.x = _toX + (this.scrollView.content.width - maxRowColSize) / 2;
-
-                itemObj.y = - Math.floor(i / this.columnCount) * (this._itemInfo.height + this.gapV) - this.gapV - (1 - this._itemInfo.anchorY) * this._itemInfo.height;
+                x = _toX + (this.scrollView.content.width - maxRowColSize) / 2;
+                y = - Math.floor(i / this.columnCount) * (this._itemInfo.height + this.gapV) - this.gapV - (1 - this._itemInfo.anchorY) * this._itemInfo.height;
             }
-            itemObj.active = i < dataLen;
 
-            this._initItem(itemObj);
+            if (i < shownCount) {
+                let itemObj = i === 0 ? oneItemObj : getOneItemObj(false);
+                this._itemObjs.push(itemObj);
+
+                itemObj.index = i;
+                itemObj.x = x;
+                itemObj.y = y;
+                itemObj.active = i < dataLen;
+
+                this._initItem(itemObj);
+            }
+
+            this._allItemInfos.push({ index: i, x: x, y: y, width: this._itemInfo.width, height: this._itemInfo.height });
         }
 
         this._createItems();
@@ -239,7 +268,7 @@ cc.Class({
      */
     isVisible: function (index) {
         return this._itemObjs.some(function (itemObj) {
-            return itemObj.index == index;
+            return itemObj.index == index && itemObj.active;
         });
     },
 
@@ -386,69 +415,63 @@ cc.Class({
         let dataLen = this._datas.length;
         if (dataLen == 0) return;
 
-        this._minXInScrollNode = -this.scrollView.node.width * this.scrollView.node.anchorX;
-        this._maxXInScrollNode = this.scrollView.node.width + this._minXInScrollNode;
-        this._minYInScrollNode = -this.scrollView.node.height * this.scrollView.node.anchorY;
-        this._maxYInScrollNode = this.scrollView.node.height + this._minYInScrollNode;
+        var unshowItemObjs = this._itemObjs.slice();
+        var needShowItems = [];
+        for (var i = 0; i < this._allItemInfos.length; i++) {
+            var itemInfoI = this._allItemInfos[i];
+            this._tempItemBox.x = itemInfoI.x - this._itemInfo.anchorX * itemInfoI.width;
+            this._tempItemBox.y = itemInfoI.y - this._itemInfo.anchorY * itemInfoI.height;
+            this._tempItemBox.width = itemInfoI.width;
+            this._tempItemBox.height = itemInfoI.height;
 
-        if (this.isHorizontal) {
-            let isRight = this.scrollView.content.x > this._lastContentPosX;
-            let itemLen = this._itemObjs.length;
-            let itemOneWidth = this._itemInfo.width + this.gapH;
-            let itemAllWidth = itemOneWidth * Math.ceil(itemLen / this.rowCount);
-            for (let i = 0; i < itemLen; ++i) {
-                let itemObj = this._itemObjs[i];
-                let viewPos = this._getItemPositionInScroll(itemObj);
-                if (isRight) {
-                    if (viewPos.x - this._itemInfo.width * this._itemInfo.anchorX > this._maxXInScrollNode && itemObj.x - itemAllWidth > 0) {
-                        itemObj.x = itemObj.x - itemAllWidth;
-                        itemObj.index -= itemLen;
-                        itemObj.active = true;
-                    }
-                } else {
-                    if (viewPos.x + this._itemInfo.width * this._itemInfo.anchorX < this._minXInScrollNode && itemObj.x + itemAllWidth <= this.scrollView.content.width) {
-                        itemObj.x = itemObj.x + itemAllWidth
-                        itemObj.index += itemLen;
-                        itemObj.active = itemObj.index < dataLen;
+            this._tempItemPos.x = this._tempItemBox.x;
+            this._tempItemPos.y = this._tempItemBox.y;
+            this._tempItemPos = this.scrollView.content.convertToWorldSpaceAR(this._tempItemPos);
+            this._tempItemPos = this.scrollView.node.convertToNodeSpaceAR(this._tempItemPos);
+            this._tempItemBox.x = this._tempItemPos.x;
+            this._tempItemBox.y = this._tempItemPos.y;
+
+            if (this._scrollViewBox.intersects(this._tempItemBox)) {
+                var findIt = false;
+                for (var j = 0; j < unshowItemObjs.length; j++) {
+                    if (unshowItemObjs[j].index == itemInfoI.index && unshowItemObjs[j].active) {
+                        unshowItemObjs.splice(j, 1);
+                        findIt = true;
+                        break;
                     }
                 }
+                if (!findIt) {
+                    needShowItems.push(itemInfoI);
+                }
+            }
+        }
 
+        for (var i = 0; i < needShowItems.length; i++) {
+            var itemObj = unshowItemObjs[i];
+            var showItemInfo = needShowItems[i];
+            if (itemObj) {
+                itemObj.index = showItemInfo.index;
+                itemObj.x = showItemInfo.x;
+                itemObj.y = showItemInfo.y;
+                itemObj.active = true;
                 if (itemObj.item) {
                     itemObj.item.x = itemObj.x;
-                    itemObj.item.active = itemObj.active;
-                    if (itemObj.active) this.updateItem(itemObj.item, itemObj.index);
-                }
-            }
-        }
-        else {
-            let isDown = this.scrollView.content.y < this._lastContentPosY;
-            let itemLen = this._itemObjs.length;
-            let itemOneHeight = this._itemInfo.height + this.gapV;
-            let itemAllHeight = itemOneHeight * Math.ceil(itemLen / this.columnCount);
-            for (let i = 0; i < itemLen; ++i) {
-                let itemObj = this._itemObjs[i];
-                let viewPos = this._getItemPositionInScroll(itemObj);
-                if (isDown) {
-                    if (viewPos.y + this._itemInfo.height * this._itemInfo.anchorY < this._minYInScrollNode && itemObj.y + itemAllHeight < 0) {
-                        itemObj.y = itemObj.y + itemAllHeight;
-                        itemObj.index -= itemLen;
-                        itemObj.active = true;
-                    }
-                } else {
-                    if (viewPos.y - this._itemInfo.height * this._itemInfo.anchorY > this._maxYInScrollNode && itemObj.y - itemAllHeight >= -this.scrollView.content.height) {
-                        itemObj.y = itemObj.y - itemAllHeight;
-                        itemObj.index += itemLen;
-                        itemObj.active = itemObj.index < dataLen;
-                    }
-                }
-
-                if (itemObj.item) {
                     itemObj.item.y = itemObj.y;
-                    itemObj.item.active = itemObj.active;
-                    if (itemObj.active) this.updateItem(itemObj.item, itemObj.index);
+                    itemObj.item.active = true;
+                }
+                this.updateItem(itemObj.item, itemObj.index);
+            }
+        }
+        for (var i = needShowItems.length; i < unshowItemObjs.length; i++) {
+            var itemObj = unshowItemObjs[i];
+            if (itemObj) {
+                itemObj.active = false;
+                if (itemObj.item) {
+                    itemObj.item.active = false;
                 }
             }
         }
+
         // update _lastContentPos
         if (this.isHorizontal) {
             this._lastContentPosX = this.scrollView.content.x;
