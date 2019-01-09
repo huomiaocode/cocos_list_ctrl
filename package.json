@@ -1,6 +1,6 @@
 {
   "name": "cocos_list_ctrl",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "this is a list component can be used in CocosCreator project.",
   "main": "cocos_list_ctrl.js",
   "scripts": {
