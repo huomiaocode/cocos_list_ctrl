@@ -278,6 +278,35 @@ cc.Class({
         });
     },
 
+    _addItemNodeEvents: function (item) {
+        if (!item) return;
+
+        if (this.enableItemClick) {
+            item.on("touchend", this._onItemClick, this);
+        }
+        if (this.sizeFlexible) {
+            let self = this;
+            item._sizeChangedFunc = function () {
+                self._onItemSizeChanged(item);
+            }
+            item.on("size-changed", item._sizeChangedFunc, item);
+        }
+    },
+
+    _removeNodeEvents: function (item) {
+        if (!item) return;
+
+        if (this.enableItemClick) {
+            item.off("touchend", this._onItemClick, this);
+        }
+        if (this.sizeFlexible) {
+            if (item._sizeChangedFunc) {
+                item.off("size-changed", item._sizeChangedFunc, item);
+                delete item._sizeChangedFunc;
+            }
+        }
+    },
+
     _getItemObj: function (needCreate) {
         let item = this._itemPools.get();
         if (!item) {
@@ -286,12 +315,7 @@ cc.Class({
             }
         }
         else {
-            if (this.enableItemClick) {
-                item.on("touchend", this._onItemClick, this);
-            }
-            if (this.sizeFlexible) {
-                item.on("size-changed", this._onItemSizeChanged, this);
-            }
+            this._addItemNodeEvents(item);
         }
 
         return { item: item, x: 0, y: 0, index: 0, active: false };
@@ -299,12 +323,7 @@ cc.Class({
 
     _recyleItem: function (item) {
         if (cc.isValid(item)) {
-            if (this.enableItemClick) {
-                item.off("touchend", this._onItemClick, this);
-            }
-            if (this.sizeFlexible) {
-                item.off("size-changed", this._onItemSizeChanged, this);
-            }
+            this._removeNodeEvents(item);
             this._itemPools.put(item);
         }
     },
@@ -356,54 +375,122 @@ cc.Class({
         }.bind(this));
     },
 
-    _onItemSizeChanged: function () {
+    _onItemSizeChanged: function (item) {
         if (!this.sizeFlexible) return;
         if (!this._datas) return;
+        if (!item) return;
 
         let dataLen = this._datas.length;
         if (dataLen == 0) return;
 
-        let itemObjLen = this._itemObjs.length;
-        if (itemObjLen == 0) return;
-
-        let itemObjDic = {};
-        this._itemObjs.forEach(function(item){
-            itemObjDic[item.index] = item;
+        let itemObj = null;
+        this._itemObjs.some(function (itemObjI) {
+            if (itemObjI.item == item) {
+                itemObj = itemObjI;
+                return true;
+            }
         });
 
+        if (!itemObj) return;
+
+        if (!this._tag) this._tag = true;
+        else return;
+
+        var itemInfo = this._allItemInfos[itemObj.index];
+        let startI = this.isHorizontal ? itemInfo.col : itemInfo.row;
         let step = this.isHorizontal ? this.rowCount : this.columnCount;
         let toXY = 0;
-        for (let i = 0; i < dataLen; i += step) {
-            let maxWidth = 0;
-            let maxHeight = 0;
-            for (let j = 0; j < step; j++) {
-                let itemInfoIJ = this._allItemInfos[i+j];
-                if (itemInfoIJ) {
-                    let itemObj = itemObjDic[itemInfoIJ.index];
-                    // let x = itemInfoIJ.x;
-                    // let y = itemInfoIJ.y;
-                    let width = itemInfoIJ.width;
-                    let height = itemInfoIJ.height;
-
-                    if (itemObj && itemObj.item) {
-                        width = itemObj.item.width;
-                        height = itemObj.item.height;
-                    }
-
+        if (startI > 0) {
+            let itemInfoMax = null;
+            let f = (startI - 1) * step;
+            let t = startI * step;
+            for (let i = f; i < t; i++) {
+                let itemInfoI = this._allItemInfos[i];
+                if (!itemInfoMax) itemInfoMax = itemInfoI;
+                else {
                     if (this.isHorizontal) {
-                        maxWidth = width;
-                        itemInfoIJ.x = toXY + this.gapH + (1 - this._itemInfo.anchorX) * width;;
-                        itemInfoIJ.width = width;
+                        if (itemInfoMax.width < itemInfoI.width) {
+                            itemInfoMax = itemInfoI;
+                        }
                     }
                     else {
-                        maxHeight = height;
-                        itemInfoIJ.y = toXY - this.gapV - (1 - this._itemInfo.anchorY) * height;;
-                        itemInfoIJ.height = height;
+                        if (itemInfoMax.height < itemInfoI.height) {
+                            itemInfoMax = itemInfoI;
+                        }
+                    }
+                }
+            }
+            if (itemInfoMax) {
+                if (this.isHorizontal) {
+                    toXY = itemInfoMax.x + (1 - this._itemInfo.anchorX) * itemInfoMax.width;
+                }
+                else {
+                    toXY = itemInfoMax.y - (1 - this._itemInfo.anchorY) * itemInfoMax.height;
+                }
+            }
+        }
+
+        let maxWidth1 = 0;
+        let maxHeight1 = 0;
+        let maxWidth2 = 0;
+        let maxHeight2 = 0;
+        var from = startI * step;
+        var to = (startI + 1) * step;
+        for (let i = from; i < to; i++) {
+            let itemInfoI = this._allItemInfos[i];
+            if (itemInfoI) {
+                let width = itemInfoI.width;
+                let height = itemInfoI.height;
+
+                if (this.isHorizontal) {
+                    if (maxWidth1 < width) maxWidth1 = width;
+                }
+                else {
+                    if (maxHeight1 < height) maxHeight1 = height;
+                }
+
+                if (itemInfoI.index == itemObj.index && itemObj.item) {
+                    width = itemObj.item.width;
+                    height = itemObj.item.height;
+                }
+
+                if (this.isHorizontal) {
+                    if (maxWidth2 < width) maxWidth2 = width;
+                    itemInfoI.x = toXY + this.gapH + (1 - this._itemInfo.anchorX) * width;
+                    itemInfoI.width = width;
+                }
+                else {
+                    if (maxHeight2 < height) maxHeight2 = height;
+                    itemInfoI.y = toXY - this.gapV - (1 - this._itemInfo.anchorY) * height;
+                    itemInfoI.height = height;
+                }
+            }
+        }
+        // toXY += this.isHorizontal ? (maxWidth2 + this.gapH) : (-maxHeight2 - this.gapV);
+        var sizeOffset = this.isHorizontal ? (maxWidth2 - maxWidth1) : (maxHeight2 - maxHeight1);
+        console.log(sizeOffset);
+
+        if (sizeOffset != 0) {
+            for (let i = to; i < dataLen; i += step) {
+                for (let j = 0; j < step; j++) {
+                    let itemInfoIJ = this._allItemInfos[i + j];
+                    if (itemInfoIJ) {
+                        if (this.isHorizontal) {
+                            itemInfoIJ.x += sizeOffset;
+                        }
+                        else {
+                            itemInfoIJ.y += sizeOffset;
+                        }
                     }
                 }
             }
 
-            toXY += this.isHorizontal ? maxWidth : -maxHeight;
+            if (this.isHorizontal) {
+                this.scrollView.content.width += sizeOffset;
+            } else {
+                this.scrollView.content.height += sizeOffset;
+            }
+            this._itemSizeChanged = true;
         }
 
         // let arr = this._itemObjs.slice();
@@ -419,7 +506,7 @@ cc.Class({
         // for (i; i < dataLen; ++i) {
         //     let itemInfoI = this._allItemInfos[i];
         //     let itemObj = null;
-            
+
         //     let x = itemInfoI.x;
         //     let y = itemInfoI.y;
         //     let width = itemInfoI.width;
@@ -493,7 +580,6 @@ cc.Class({
         //     itemInfoI.height = height;
         // }
 
-        this._itemSizeChanged = true;
     },
 
     _createItems: function () {
@@ -530,12 +616,7 @@ cc.Class({
         else if (this.itemNode) item = cc.instantiate(this.itemNode);
 
         if (item) {
-            if (this.enableItemClick) {
-                item.on("touchend", this._onItemClick, this);
-            }
-            if (this.sizeFlexible) {
-                item.on("size-changed", this._onItemSizeChanged, this);
-            }
+            this._addItemNodeEvents(item);
         }
 
         return item;

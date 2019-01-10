@@ -41,8 +41,8 @@
     },
     "_scale": {
       "__type__": "cc.Vec3",
-      "x": 0.3861083984375,
-      "y": 0.3861083984375,
+      "x": 0.53125,
+      "y": 0.53125,
       "z": 0.3861083984375
     },
     "_quat": {
@@ -53,7 +53,6 @@
       "w": 1
     },
     "_zIndex": 0,
-    "_is3DNode": true,
     "groupIndex": 0,
     "autoReleaseAssets": false,
     "_id": "036a8d73-23be-4cd9-9863-7c9c65a84025"
@@ -117,6 +116,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -127,10 +128,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "49tjYmZtFI3IpqyMjSU+i9"
   },
   {
@@ -179,6 +177,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -189,10 +189,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "ff7WPifMxBebOkQFoQ32Ef"
   },
   {
@@ -215,18 +212,6 @@
     "_depth": -1,
     "_zoomRatio": 1,
     "_targetTexture": null,
-    "_fov": 60,
-    "_orthoSize": 10,
-    "_nearClip": 0.1,
-    "_farClip": 4096,
-    "_ortho": true,
-    "_rect": {
-      "__type__": "cc.Rect",
-      "x": 0,
-      "y": 0,
-      "width": 1,
-      "height": 1
-    },
     "_id": "ceuGXTvKVL8b74OQLxPdU3"
   },
   {
@@ -285,6 +270,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -295,10 +282,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "7fbN+bLYRFHqZsPp3Uu0Aq"
   },
   {
@@ -350,6 +334,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -360,10 +346,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "453KMs5eZLA446ZeTPJ4BE"
   },
   {
@@ -471,6 +454,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -481,10 +466,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "a7ETY7F3lCKbvRSSO1VU+m"
   },
   {
@@ -529,6 +511,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -539,10 +523,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "2f3maLDw1Bh7/v2OAkKq3N"
   },
   {
@@ -673,6 +654,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -683,10 +666,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "beA7cUfJVGXpK2GKbm9FEw"
   },
   {
@@ -738,6 +718,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -748,10 +730,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "92tEdcMfVLmp3HJp4rRhjv"
   },
   {
@@ -859,6 +838,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -869,10 +850,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "e1n8nnI7JFAZNC+gkjAWJc"
   },
   {
@@ -917,6 +895,8 @@
       "y": 1,
       "z": 1
     },
+    "_rotationX": 0,
+    "_rotationY": 0,
     "_quat": {
       "__type__": "cc.Quat",
       "x": 0,
@@ -927,10 +907,7 @@
     "_skewX": 0,
     "_skewY": 0,
     "_zIndex": 0,
-    "_is3DNode": false,
     "groupIndex": 0,
-    "_rotationX": 0,
-    "_rotationY": 0,
     "_id": "c5xaF1i2BBbaRJAorqr3RL"
   },
   {
