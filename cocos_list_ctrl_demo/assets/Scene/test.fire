@@ -41,9 +41,9 @@
     },
     "_scale": {
       "__type__": "cc.Vec3",
-      "x": 0.5814453125,
-      "y": 0.5814453125,
-      "z": 0.5814453125
+      "x": 0.3861083984375,
+      "y": 0.3861083984375,
+      "z": 0.3861083984375
     },
     "_quat": {
       "__type__": "cc.Quat",
@@ -244,7 +244,7 @@
         "__id__": 9
       }
     ],
-    "_active": false,
+    "_active": true,
     "_level": 1,
     "_components": [
       {
@@ -613,7 +613,7 @@
     "isHorizontal": true,
     "enableItemClick": false,
     "itemDelayCreate": false,
-    "sizeFlexible": false,
+    "sizeFlexible": true,
     "itemClickEvents": [],
     "_id": "3aXH9GuwhOAYIbAv808sQ1"
   },

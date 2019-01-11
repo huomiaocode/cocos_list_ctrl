@@ -15,7 +15,7 @@ cc.Class({
         window.list1 = this.list1;
         window.list2 = this.list2;
 
-        for (var i = 0; i < 49; i++) {
+        for (var i = 0; i < 120; i++) {
             datas.push({
                 label: "label  " + i,
             });

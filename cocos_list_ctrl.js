@@ -349,7 +349,7 @@ cc.Class({
         if (comp) {
             if (comp.updateItem) comp.updateItem(this._datas[index], index);
 
-            var itemInfoI = this._allItemInfos[index];
+            let itemInfoI = this._allItemInfos[index];
             if (itemInfoI) {
                 if (this.isHorizontal) {
                     if (itemInfoI.width != item.width) this._onItemSizeChanged(item, index);
@@ -404,9 +404,7 @@ cc.Class({
 
         if (index == undefined) return;
 
-        console.log(index);
-
-        var itemInfo = this._allItemInfos[index];
+        let itemInfo = this._allItemInfos[index];
         let itemInfoI = null;
         let startI = this.isHorizontal ? itemInfo.col : itemInfo.row;
         let step = this.isHorizontal ? this.rowCount : this.columnCount;
@@ -445,8 +443,8 @@ cc.Class({
         let maxHeight1 = 0;
         let maxWidth2 = 0;
         let maxHeight2 = 0;
-        var from = startI * step;
-        var to = (startI + 1) * step;
+        let from = startI * step;
+        let to = (startI + 1) * step;
 
         for (let i = from; i < to; i++) {
             itemInfoI = this._allItemInfos[i];
@@ -461,7 +459,7 @@ cc.Class({
                     if (maxHeight1 < height) maxHeight1 = height;
                 }
 
-                var findIt = false;
+                let findIt = false;
                 if (itemInfoI.index == itemInfo.index) {
                     width = item.width;
                     height = item.height;
@@ -485,7 +483,7 @@ cc.Class({
             }
         }
 
-        var sizeOffset = this.isHorizontal ? (maxWidth2 - maxWidth1) : (maxHeight2 - maxHeight1);
+        let sizeOffset = this.isHorizontal ? (maxWidth2 - maxWidth1) : (maxHeight2 - maxHeight1);
         if (sizeOffset != 0) {
             for (let i = to; i < dataLen; i += step) {
                 for (let j = 0; j < step; j++) {
@@ -506,6 +504,19 @@ cc.Class({
             } else {
                 this.scrollView.content.height += sizeOffset;
             }
+
+            for (let i=0; i < this._itemObjs.length; i++) {
+                let itemObjI = this._itemObjs[i];
+                if (itemObjI && itemObjI.item && itemObjI.index >= to && this._allItemInfos[itemObjI.index]) {
+                    if (this.isHorizontal) {
+                        itemObjI.item.x = this._allItemInfos[itemObjI.index].x;
+                    }
+                    else {
+                        itemObjI.item.y = this._allItemInfos[itemObjI.index].y;
+                    }
+                }
+            }
+
             this._itemSizeChanged = true;
         }
     },
