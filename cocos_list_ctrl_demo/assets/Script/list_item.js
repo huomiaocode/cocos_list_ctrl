@@ -15,7 +15,7 @@ cc.Class({
         this._data = data;
         this._index = index;
 
-        this.txt.string = data.label + " " + index;
+        this.txt.string = data.label;
     },
 
     onBtnClick: function () {

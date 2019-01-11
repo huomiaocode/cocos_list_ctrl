@@ -348,6 +348,16 @@ cc.Class({
 
         if (comp) {
             if (comp.updateItem) comp.updateItem(this._datas[index], index);
+
+            var itemInfoI = this._allItemInfos[index];
+            if (itemInfoI) {
+                if (this.isHorizontal) {
+                    if (itemInfoI.width != item.width) this._onItemSizeChanged(item, index);
+                }
+                else {
+                    if (itemInfoI.height != item.height) this._onItemSizeChanged(item, index);
+                }
+            }
         }
     },
 
@@ -375,7 +385,7 @@ cc.Class({
         }.bind(this));
     },
 
-    _onItemSizeChanged: function (item) {
+    _onItemSizeChanged: function (item, index) {
         if (!this.sizeFlexible) return;
         if (!this._datas) return;
         if (!item) return;
@@ -383,20 +393,21 @@ cc.Class({
         let dataLen = this._datas.length;
         if (dataLen == 0) return;
 
-        let itemObj = null;
-        this._itemObjs.some(function (itemObjI) {
-            if (itemObjI.item == item) {
-                itemObj = itemObjI;
-                return true;
-            }
-        });
+        if (index == undefined) {
+            this._itemObjs.some(function (itemObjI) {
+                if (itemObjI.item == item) {
+                    index = itemObjI.index;
+                    return true;
+                }
+            });
+        }
 
-        if (!itemObj) return;
+        if (index == undefined) return;
 
-        if (!this._tag) this._tag = true;
-        else return;
+        console.log(index);
 
-        var itemInfo = this._allItemInfos[itemObj.index];
+        var itemInfo = this._allItemInfos[index];
+        let itemInfoI = null;
         let startI = this.isHorizontal ? itemInfo.col : itemInfo.row;
         let step = this.isHorizontal ? this.rowCount : this.columnCount;
         let toXY = 0;
@@ -405,7 +416,7 @@ cc.Class({
             let f = (startI - 1) * step;
             let t = startI * step;
             for (let i = f; i < t; i++) {
-                let itemInfoI = this._allItemInfos[i];
+                itemInfoI = this._allItemInfos[i];
                 if (!itemInfoMax) itemInfoMax = itemInfoI;
                 else {
                     if (this.isHorizontal) {
@@ -436,8 +447,9 @@ cc.Class({
         let maxHeight2 = 0;
         var from = startI * step;
         var to = (startI + 1) * step;
+
         for (let i = from; i < to; i++) {
-            let itemInfoI = this._allItemInfos[i];
+            itemInfoI = this._allItemInfos[i];
             if (itemInfoI) {
                 let width = itemInfoI.width;
                 let height = itemInfoI.height;
@@ -449,27 +461,31 @@ cc.Class({
                     if (maxHeight1 < height) maxHeight1 = height;
                 }
 
-                if (itemInfoI.index == itemObj.index && itemObj.item) {
-                    width = itemObj.item.width;
-                    height = itemObj.item.height;
+                var findIt = false;
+                if (itemInfoI.index == itemInfo.index) {
+                    width = item.width;
+                    height = item.height;
+                    findIt = true;
                 }
 
                 if (this.isHorizontal) {
                     if (maxWidth2 < width) maxWidth2 = width;
-                    itemInfoI.x = toXY + this.gapH + (1 - this._itemInfo.anchorX) * width;
-                    itemInfoI.width = width;
+                    if (findIt) {
+                        itemInfoI.x = item.x = toXY + this.gapH + (1 - this._itemInfo.anchorX) * width;
+                        itemInfoI.width = width;
+                    }
                 }
                 else {
                     if (maxHeight2 < height) maxHeight2 = height;
-                    itemInfoI.y = toXY - this.gapV - (1 - this._itemInfo.anchorY) * height;
-                    itemInfoI.height = height;
+                    if (findIt) {
+                        itemInfoI.y = item.y = toXY - this.gapV - (1 - this._itemInfo.anchorY) * height;
+                        itemInfoI.height = height;
+                    }
                 }
             }
         }
-        // toXY += this.isHorizontal ? (maxWidth2 + this.gapH) : (-maxHeight2 - this.gapV);
-        var sizeOffset = this.isHorizontal ? (maxWidth2 - maxWidth1) : (maxHeight2 - maxHeight1);
-        console.log(sizeOffset);
 
+        var sizeOffset = this.isHorizontal ? (maxWidth2 - maxWidth1) : (maxHeight2 - maxHeight1);
         if (sizeOffset != 0) {
             for (let i = to; i < dataLen; i += step) {
                 for (let j = 0; j < step; j++) {
@@ -479,7 +495,7 @@ cc.Class({
                             itemInfoIJ.x += sizeOffset;
                         }
                         else {
-                            itemInfoIJ.y += sizeOffset;
+                            itemInfoIJ.y -= sizeOffset;
                         }
                     }
                 }
@@ -492,94 +508,6 @@ cc.Class({
             }
             this._itemSizeChanged = true;
         }
-
-        // let arr = this._itemObjs.slice();
-        // arr.sort(function (l, r) { return l.index - r.index; });
-
-        // let i = arr[0].index;
-        // let count = 0;
-        // let isFirst = true;
-        // let toXY = 0;
-        // let maxRowColSize = 0;
-        // let curRowCol = 0;
-
-        // for (i; i < dataLen; ++i) {
-        //     let itemInfoI = this._allItemInfos[i];
-        //     let itemObj = null;
-
-        //     let x = itemInfoI.x;
-        //     let y = itemInfoI.y;
-        //     let width = itemInfoI.width;
-        //     let height = itemInfoI.height;
-
-        //     if (count < itemObjLen) {
-        //         itemObj = this.itemObjByIndex(itemInfoI.index);
-        //         if (itemObj) {
-        //             count++;
-        //             if (itemObj.item) {
-        //                 width = itemObj.item.width;
-        //                 height = itemObj.item.height;
-        //             }
-        //         }
-        //     }
-
-        //     if (isFirst) {
-        //         isFirst = false;
-        //         if (this.isHorizontal) {
-        //             toXY = itemInfoI.x;
-        //             maxRowColSize = width;
-        //             curRowCol = itemInfoI.col;
-        //         }
-        //         else {
-        //             toXY = itemInfoI.y;
-        //             maxRowColSize = height;
-        //             curRowCol = itemInfoI.row;
-        //         }
-        //     }
-        //     else {
-        //         if (this.isHorizontal) {
-        //             if (itemInfoI.col == curRowCol) {
-        //                 if (width > maxRowColSize) maxRowColSize = width;
-        //             }
-        //             else {
-        //                 toXY += this.gapH + maxRowColSize;
-        //                 maxRowColSize = width;
-        //                 curRowCol = itemInfoI.col;
-        //             }
-        //         }
-        //         else {
-        //             if (itemInfoI.col == curRowCol) {
-        //                 if (height > maxRowColSize) maxRowColSize = height;
-        //             }
-        //             else {
-        //                 toXY += this.gapV + maxRowColSize;
-        //                 maxRowColSize = height;
-        //                 curRowCol = itemInfoI.row;
-        //             }
-        //         }
-        //     }
-
-        //     if (this.isHorizontal) {
-        //         x = toXY + (1 - this._itemInfo.anchorX) * width;
-
-        //         // let _row = i % this.rowCount;
-        //         // let _toY = _row * (height + this.gapV) + (this._itemInfo.anchorY) * height - this.scrollView.content.height * this.scrollView.content.anchorY;
-        //         // y = -_toY - (this.scrollView.content.height - this._maxRowColSize) / 2;
-        //         // x = Math.floor(i / this.rowCount) * (width + this.gapH) + this.gapH + (1 - this._itemInfo.anchorX) * width;
-        //     }
-        //     else {
-        //         // let _col = i % this.columnCount;
-        //         // let _toX = _col * (width + this.gapH) + (this._itemInfo.anchorX) * width - this.scrollView.content.width * this.scrollView.content.anchorX;
-        //         // x = _toX + (this.scrollView.content.width - this._maxRowColSize) / 2;
-        //         // y = - Math.floor(i / this.columnCount) * (height + this.gapV) - this.gapV - (1 - this._itemInfo.anchorY) * height;
-        //     }
-
-        //     itemInfoI.x = x;
-        //     itemInfoI.y = y;
-        //     itemInfoI.width = width;
-        //     itemInfoI.height = height;
-        // }
-
     },
 
     _createItems: function () {

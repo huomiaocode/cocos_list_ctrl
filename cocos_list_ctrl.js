@@ -26,6 +26,7 @@ cc.Class({
 
         enableItemClick: false,
         itemDelayCreate: false,
+        sizeFlexible: false,
 
         itemClickEvents: {
             default: [],
@@ -42,6 +43,7 @@ cc.Class({
         this._itemObjs = [];
         this._allItemInfos = [];
         this._itemAllCreated = false;
+        this._itemSizeChanged = false;
         this._itemPools = new cc.NodePool(this.itemComponentName);
 
         this._scrollViewBox = new cc.Rect(
@@ -173,7 +175,7 @@ cc.Class({
         };
 
         let shownCount = 0;
-        let maxRowColSize = 0;
+        this._maxRowColSize = 0;
 
         if (this.isHorizontal) {
             this.scrollView.content.anchorX = 0;
@@ -186,7 +188,7 @@ cc.Class({
             if (this.rowCount < 1) this.rowCount = 1;
 
             shownCount = this.rowCount * (Math.ceil(this.scrollView.content.parent.width / this._itemInfo.width) + 1);
-            maxRowColSize = this.rowCount * (this._itemInfo.height + this.gapV) - this.gapV;
+            this._maxRowColSize = this.rowCount * (this._itemInfo.height + this.gapV) - this.gapV;
             this.scrollView.content.width = Math.ceil(dataLen / this.rowCount) * (this._itemInfo.width + this.gapH) + this.gapH;
         }
         else {
@@ -201,25 +203,29 @@ cc.Class({
 
             shownCount = this.columnCount * (Math.ceil(this.scrollView.content.parent.height / this._itemInfo.height) + 1);
 
-            maxRowColSize = this.columnCount * (this._itemInfo.width + this.gapH) - this.gapH;
+            this._maxRowColSize = this.columnCount * (this._itemInfo.width + this.gapH) - this.gapH;
             this.scrollView.content.height = Math.ceil(dataLen / this.columnCount) * (this._itemInfo.height + this.gapV) + this.gapV + 2;
         }
 
         // add item
-        var x = 0;
-        var y = 0;
+        let x = 0;
+        let y = 0;
+        let row = 0;
+        let col = 0;
         for (let i = 0; i < dataLen; ++i) {
             if (this.isHorizontal) {
-                let _row = i % this.rowCount;
-                let _toY = _row * (this._itemInfo.height + this.gapV) + (this._itemInfo.anchorY) * this._itemInfo.height - this.scrollView.content.height * this.scrollView.content.anchorY;
-                y = -_toY - (this.scrollView.content.height - maxRowColSize) / 2;
-                x = Math.floor(i / this.rowCount) * (this._itemInfo.width + this.gapH) + this.gapH + (1 - this._itemInfo.anchorX) * this._itemInfo.width;
+                row = i % this.rowCount;
+                col = Math.floor(i / this.rowCount);
+                let _toY = row * (this._itemInfo.height + this.gapV) + (this._itemInfo.anchorY) * this._itemInfo.height - this.scrollView.content.height * this.scrollView.content.anchorY;
+                y = -_toY - (this.scrollView.content.height - this._maxRowColSize) / 2;
+                x = col * (this._itemInfo.width + this.gapH) + this.gapH + (1 - this._itemInfo.anchorX) * this._itemInfo.width;
             }
             else {
-                let _col = i % this.columnCount;
-                let _toX = _col * (this._itemInfo.width + this.gapH) + (this._itemInfo.anchorX) * this._itemInfo.width - this.scrollView.content.width * this.scrollView.content.anchorX;
-                x = _toX + (this.scrollView.content.width - maxRowColSize) / 2;
-                y = - Math.floor(i / this.columnCount) * (this._itemInfo.height + this.gapV) - this.gapV - (1 - this._itemInfo.anchorY) * this._itemInfo.height;
+                col = i % this.columnCount;
+                row = Math.floor(i / this.columnCount);
+                let _toX = col * (this._itemInfo.width + this.gapH) + (this._itemInfo.anchorX) * this._itemInfo.width - this.scrollView.content.width * this.scrollView.content.anchorX;
+                x = _toX + (this.scrollView.content.width - this._maxRowColSize) / 2;
+                y = - row * (this._itemInfo.height + this.gapV) - this.gapV - (1 - this._itemInfo.anchorY) * this._itemInfo.height;
             }
 
             if (i < shownCount) {
@@ -234,7 +240,7 @@ cc.Class({
                 this._initItem(itemObj);
             }
 
-            this._allItemInfos.push({ index: i, x: x, y: y, width: this._itemInfo.width, height: this._itemInfo.height });
+            this._allItemInfos.push({ index: i, x: x, y: y, width: this._itemInfo.width, height: this._itemInfo.height, row: row, col: col });
         }
 
         this._createItems();
@@ -272,6 +278,35 @@ cc.Class({
         });
     },
 
+    _addItemNodeEvents: function (item) {
+        if (!item) return;
+
+        if (this.enableItemClick) {
+            item.on("touchend", this._onItemClick, this);
+        }
+        if (this.sizeFlexible) {
+            let self = this;
+            item._sizeChangedFunc = function () {
+                self._onItemSizeChanged(item);
+            }
+            item.on("size-changed", item._sizeChangedFunc, item);
+        }
+    },
+
+    _removeNodeEvents: function (item) {
+        if (!item) return;
+
+        if (this.enableItemClick) {
+            item.off("touchend", this._onItemClick, this);
+        }
+        if (this.sizeFlexible) {
+            if (item._sizeChangedFunc) {
+                item.off("size-changed", item._sizeChangedFunc, item);
+                delete item._sizeChangedFunc;
+            }
+        }
+    },
+
     _getItemObj: function (needCreate) {
         let item = this._itemPools.get();
         if (!item) {
@@ -280,9 +315,7 @@ cc.Class({
             }
         }
         else {
-            if (this.enableItemClick) {
-                item.on("touchend", this._onItemClick, this);
-            }
+            this._addItemNodeEvents(item);
         }
 
         return { item: item, x: 0, y: 0, index: 0, active: false };
@@ -290,9 +323,7 @@ cc.Class({
 
     _recyleItem: function (item) {
         if (cc.isValid(item)) {
-            if (this.enableItemClick) {
-                item.off("touchend", this._onItemClick, this);
-            }
+            this._removeNodeEvents(item);
             this._itemPools.put(item);
         }
     },
@@ -317,6 +348,16 @@ cc.Class({
 
         if (comp) {
             if (comp.updateItem) comp.updateItem(this._datas[index], index);
+
+            var itemInfoI = this._allItemInfos[index];
+            if (itemInfoI) {
+                if (this.isHorizontal) {
+                    if (itemInfoI.width != item.width) this._onItemSizeChanged(item, index);
+                }
+                else {
+                    if (itemInfoI.height != item.height) this._onItemSizeChanged(item, index);
+                }
+            }
         }
     },
 
@@ -342,6 +383,131 @@ cc.Class({
         this.itemClickEvents.forEach(function (handler) {
             handler.emit([this._datas[itemObj.index], itemObj.index, itemObj.item]);
         }.bind(this));
+    },
+
+    _onItemSizeChanged: function (item, index) {
+        if (!this.sizeFlexible) return;
+        if (!this._datas) return;
+        if (!item) return;
+
+        let dataLen = this._datas.length;
+        if (dataLen == 0) return;
+
+        if (index == undefined) {
+            this._itemObjs.some(function (itemObjI) {
+                if (itemObjI.item == item) {
+                    index = itemObjI.index;
+                    return true;
+                }
+            });
+        }
+
+        if (index == undefined) return;
+
+        console.log(index);
+
+        var itemInfo = this._allItemInfos[index];
+        let itemInfoI = null;
+        let startI = this.isHorizontal ? itemInfo.col : itemInfo.row;
+        let step = this.isHorizontal ? this.rowCount : this.columnCount;
+        let toXY = 0;
+        if (startI > 0) {
+            let itemInfoMax = null;
+            let f = (startI - 1) * step;
+            let t = startI * step;
+            for (let i = f; i < t; i++) {
+                itemInfoI = this._allItemInfos[i];
+                if (!itemInfoMax) itemInfoMax = itemInfoI;
+                else {
+                    if (this.isHorizontal) {
+                        if (itemInfoMax.width < itemInfoI.width) {
+                            itemInfoMax = itemInfoI;
+                        }
+                    }
+                    else {
+                        if (itemInfoMax.height < itemInfoI.height) {
+                            itemInfoMax = itemInfoI;
+                        }
+                    }
+                }
+            }
+            if (itemInfoMax) {
+                if (this.isHorizontal) {
+                    toXY = itemInfoMax.x + (1 - this._itemInfo.anchorX) * itemInfoMax.width;
+                }
+                else {
+                    toXY = itemInfoMax.y - (1 - this._itemInfo.anchorY) * itemInfoMax.height;
+                }
+            }
+        }
+
+        let maxWidth1 = 0;
+        let maxHeight1 = 0;
+        let maxWidth2 = 0;
+        let maxHeight2 = 0;
+        var from = startI * step;
+        var to = (startI + 1) * step;
+
+        for (let i = from; i < to; i++) {
+            itemInfoI = this._allItemInfos[i];
+            if (itemInfoI) {
+                let width = itemInfoI.width;
+                let height = itemInfoI.height;
+
+                if (this.isHorizontal) {
+                    if (maxWidth1 < width) maxWidth1 = width;
+                }
+                else {
+                    if (maxHeight1 < height) maxHeight1 = height;
+                }
+
+                var findIt = false;
+                if (itemInfoI.index == itemInfo.index) {
+                    width = item.width;
+                    height = item.height;
+                    findIt = true;
+                }
+
+                if (this.isHorizontal) {
+                    if (maxWidth2 < width) maxWidth2 = width;
+                    if (findIt) {
+                        itemInfoI.x = item.x = toXY + this.gapH + (1 - this._itemInfo.anchorX) * width;
+                        itemInfoI.width = width;
+                    }
+                }
+                else {
+                    if (maxHeight2 < height) maxHeight2 = height;
+                    if (findIt) {
+                        itemInfoI.y = item.y = toXY - this.gapV - (1 - this._itemInfo.anchorY) * height;
+                        itemInfoI.height = height;
+                    }
+                }
+            }
+        }
+
+        var sizeOffset = this.isHorizontal ? (maxWidth2 - maxWidth1) : (maxHeight2 - maxHeight1);
+        if (sizeOffset != 0) {
+            for (let i = to; i < dataLen; i += step) {
+                for (let j = 0; j < step; j++) {
+                    let itemInfoIJ = this._allItemInfos[i + j];
+                    if (itemInfoIJ) {
+                        if (this.isHorizontal) {
+                            itemInfoIJ.x += sizeOffset;
+                        }
+                        else {
+                            itemInfoIJ.y -= sizeOffset;
+                        }
+                    }
+                }
+            }
+
+            if (this.isHorizontal) {
+                this.scrollView.content.width += sizeOffset;
+            } else {
+                this.scrollView.content.height += sizeOffset;
+            }
+            this._itemSizeChanged = true;
+        }
     },
 
     _createItems: function () {
@@ -378,9 +544,7 @@ cc.Class({
         else if (this.itemNode) item = cc.instantiate(this.itemNode);
 
         if (item) {
-            if (this.enableItemClick) {
-                item.on("touchend", this._onItemClick, this);
-            }
+            this._addItemNodeEvents(item);
         }
 
         return item;
@@ -404,21 +568,26 @@ cc.Class({
             this._createNextItem();
         }
 
-        if (this.isHorizontal) {
-            if (this.scrollView.content.x == this._lastContentPosX) return;
+        if (!this._itemSizeChanged) {
+            if (this.isHorizontal) {
+                if (this.scrollView.content.x == this._lastContentPosX) return;
+            }
+            else {
+                if (this.scrollView.content.y == this._lastContentPosY) return;
+            }
         }
         else {
-            if (this.scrollView.content.y == this._lastContentPosY) return;
+            this._itemSizeChanged = false;
         }
 
         if (!this._datas) return;
         let dataLen = this._datas.length;
         if (dataLen == 0) return;
 
-        var unshowItemObjs = this._itemObjs.slice();
-        var needShowItems = [];
-        for (var i = 0; i < this._allItemInfos.length; i++) {
-            var itemInfoI = this._allItemInfos[i];
+        let unshowItemObjs = this._itemObjs.slice();
+        let needShowItems = [];
+        for (let i = 0; i < this._allItemInfos.length; i++) {
+            let itemInfoI = this._allItemInfos[i];
             this._tempItemBox.x = itemInfoI.x - this._itemInfo.anchorX * itemInfoI.width;
             this._tempItemBox.y = itemInfoI.y - this._itemInfo.anchorY * itemInfoI.height;
             this._tempItemBox.width = itemInfoI.width;
@@ -432,8 +601,8 @@ cc.Class({
             this._tempItemBox.y = this._tempItemPos.y;
 
             if (this._scrollViewBox.intersects(this._tempItemBox)) {
-                var findIt = false;
-                for (var j = 0; j < unshowItemObjs.length; j++) {
+                let findIt = false;
+                for (let j = 0; j < unshowItemObjs.length; j++) {
                     if (unshowItemObjs[j].index == itemInfoI.index && unshowItemObjs[j].active) {
                         unshowItemObjs.splice(j, 1);
                         findIt = true;
@@ -446,9 +615,9 @@ cc.Class({
             }
         }
 
-        for (var i = 0; i < needShowItems.length; i++) {
-            var itemObj = unshowItemObjs[i];
-            var showItemInfo = needShowItems[i];
+        for (let i = 0; i < needShowItems.length; i++) {
+            let itemObj = unshowItemObjs[i];
+            let showItemInfo = needShowItems[i];
             if (itemObj) {
                 itemObj.index = showItemInfo.index;
                 itemObj.x = showItemInfo.x;
@@ -462,8 +631,8 @@ cc.Class({
                 this.updateItem(itemObj.item, itemObj.index);
             }
         }
-        for (var i = needShowItems.length; i < unshowItemObjs.length; i++) {
-            var itemObj = unshowItemObjs[i];
+        for (let i = needShowItems.length; i < unshowItemObjs.length; i++) {
+            let itemObj = unshowItemObjs[i];
             if (itemObj) {
                 itemObj.active = false;
                 if (itemObj.item) {

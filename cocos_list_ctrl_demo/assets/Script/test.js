@@ -17,7 +17,7 @@ cc.Class({
 
         for (var i = 0; i < 49; i++) {
             datas.push({
-                label: "label" + i,
+                label: "label  " + i,
             });
         }
 
