@@ -15,7 +15,7 @@ cc.Class({
         this._data = data;
         this._index = index;
 
-        if (!data.label2) data.label2 = data.label + (Math.random()>0.5?"\n123":"");
+        if (!data.label2) data.label2 = data.label// + (Math.random()>0.5?"  123":"");
 
         this.txt.string = data.label2;// + (Math.random()>0.5?"\n123":"");
     },

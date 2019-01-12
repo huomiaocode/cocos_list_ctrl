@@ -1,5 +1,3 @@
-
-
 cc.Class({
     extends: cc.Component,
 
@@ -23,12 +21,30 @@ cc.Class({
 
         this.list1.setItemInitParams(this._onListItemClicked.bind(this));
         this.list1.setDataProvider(datas);
-        
+
         this.list2.setItemInitParams(this._onListItemClicked.bind(this));
         this.list2.setDataProvider(datas);
     },
 
     _onListItemClicked: function (itemData) {
         console.log(itemData);
+    },
+
+    addList1Data: function () {
+        var datas = this.list1.getDataProvider()
+        datas.push({
+            label: "aaaaa"
+        });
+        this.list1.setDataProvider(datas, true);
+        this.list1.scrollToEnd();
+    },
+
+    addList2Data: function () {
+        var datas = this.list2.getDataProvider()
+        datas.push({
+            label: "aaaaa"
+        });
+        this.list2.setDataProvider(datas, true);
+        this.list2.scrollToEnd();
     }
 });

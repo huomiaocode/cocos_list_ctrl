@@ -47,7 +47,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 94.4,
+      "width": 73.4,
       "height": 30
     },
     "_anchorPoint": {
@@ -111,7 +111,7 @@
     },
     "_contentSize": {
       "__type__": "cc.Size",
-      "width": 85,
+      "width": 73.4,
       "height": 30
     },
     "_anchorPoint": {
@@ -162,14 +162,14 @@
     "_N$string": "Label",
     "_fontSize": 30,
     "_lineHeight": 30,
-    "_enableWrapText": false,
+    "_enableWrapText": true,
     "_N$file": null,
     "_isSystemFontUsed": true,
     "_spacingX": 0,
     "_N$horizontalAlign": 1,
     "_N$verticalAlign": 1,
     "_N$fontFamily": "Arial",
-    "_N$overflow": 3,
+    "_N$overflow": 0,
     "_id": ""
   },
   {
@@ -178,7 +178,7 @@
       "__id__": 1
     },
     "asset": {
-      "__uuid__": "3309a2ec-a3e6-414d-9d0a-0a28536de33b"
+      "__uuid__": "f13a871a-bcd8-4eb3-bb93-40c618895594"
     },
     "fileId": "3f0yYc20JO2qsUinN+lITj",
     "sync": false
@@ -288,11 +288,11 @@
     "_enabled": true,
     "_layoutSize": {
       "__type__": "cc.Size",
-      "width": 94.4,
+      "width": 73.4,
       "height": 30
     },
     "_resize": 1,
-    "_N$layoutType": 2,
+    "_N$layoutType": 1,
     "_N$padding": 0,
     "_N$cellSize": {
       "__type__": "cc.Size",
@@ -317,7 +317,7 @@
       "__id__": 1
     },
     "asset": {
-      "__uuid__": "3309a2ec-a3e6-414d-9d0a-0a28536de33b"
+      "__uuid__": "f13a871a-bcd8-4eb3-bb93-40c618895594"
     },
     "fileId": "e5qPYmTwRAOLDcchnI5sUw",
     "sync": false

@@ -269,6 +269,15 @@ cc.Class({
         });
     },
 
+    scrollToEnd: function () {
+        if (this.isHorizontal) {
+            this.scrollView.scrollToRight();
+        }
+        else {
+            this.scrollView.scrollToBottom();
+        }
+    },
+
     /**
      * 判断index是否可见
      */
@@ -485,6 +494,7 @@ cc.Class({
 
         let sizeOffset = this.isHorizontal ? (maxWidth2 - maxWidth1) : (maxHeight2 - maxHeight1);
         if (sizeOffset != 0) {
+            // 调整每一个的坐标
             for (let i = to; i < dataLen; i += step) {
                 for (let j = 0; j < step; j++) {
                     let itemInfoIJ = this._allItemInfos[i + j];
@@ -499,12 +509,7 @@ cc.Class({
                 }
             }
 
-            if (this.isHorizontal) {
-                this.scrollView.content.width += sizeOffset;
-            } else {
-                this.scrollView.content.height += sizeOffset;
-            }
-
+            // 调整node的坐标
             for (let i=0; i < this._itemObjs.length; i++) {
                 let itemObjI = this._itemObjs[i];
                 if (itemObjI && itemObjI.item && itemObjI.index >= to && this._allItemInfos[itemObjI.index]) {
@@ -515,6 +520,13 @@ cc.Class({
                         itemObjI.item.y = this._allItemInfos[itemObjI.index].y;
                     }
                 }
+            }
+
+            // 设置content的大小
+            if (this.isHorizontal) {
+                this.scrollView.content.width += sizeOffset;
+            } else {
+                this.scrollView.content.height += sizeOffset;
             }
 
             this._itemSizeChanged = true;
